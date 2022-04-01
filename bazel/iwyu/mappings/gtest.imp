@@ -1,0 +1,11 @@
+# NOTE(Jiaming):
+# Inspired by https://github.com/apache/arrow/blob/master/cpp/build-support/iwyu/mappings/gtest.imp
+# and https://github.com/TheOpenSpaceProgram/osp-magnum/blob/master/gtest-iwyu.imp
+[
+  { include: [ "@<gtest/internal/.*>",    private, "\"gtest/gtest.h\"",   public ] },
+  { include: [ "@<gtest/gtest-.*>",       private, "\"gtest/gtest.h\"",   public ] },
+  { include: [ "@\"gtest/internal/.*\"",  private, "\"gtest/gtest.h\"",   public ] },
+  { include: [ "@\"gtest/gtest-.*\"",     private, "\"gtest/gtest.h\"",   public ] },
+  { include: [ "<gtest/gtest_pred_impl.h>",   private, "\"gtest/gtest.h\"",   public ] },
+  { include: [ "\"gtest/gtest_pred_impl.h\"", private, "\"gtest/gtest.h\"",   public ] },
+]

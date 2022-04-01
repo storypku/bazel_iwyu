@@ -1,0 +1,13 @@
+common --color=yes
+
+# For googletest to use absl
+build --define="absl=1"
+
+build:iwyu --aspects //bazel/iwyu:iwyu.bzl%iwyu_aspect
+build:iwyu --output_groups=report
+
+build --cxxopt="-std=c++17" --host_cxxopt="-std=c++17"
+
+test --build_tests_only
+
+try-import %workspace%/user.bazelrc
