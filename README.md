@@ -3,7 +3,7 @@ Bazel Support for IWYU. No Compilation Database needed.
 
 ## How To Use
 
-1. Build and Install IWYU 0.17.0
+1. Build and Install IWYU 0.17.0 +
 
 2. Run IWYU
 ```
