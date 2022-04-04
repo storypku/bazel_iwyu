@@ -6,7 +6,7 @@ set -euo pipefail
 OUTPUT=$1
 shift
 
-IWYU_BIN="${LLVM_DIR:-/opt/llvm}/bin/include-what-you-use"
+IWYU_BIN="${IWYU_PREFIX:-/opt/llvm}/bin/include-what-you-use"
 
 if [[ ! -x "${IWYU_BIN}" ]]; then
 	echo >&2 "[Warning]: ${IWYU_BIN} doesn't exist or is not executable."
