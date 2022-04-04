@@ -1,0 +1,12 @@
+package(default_visibility = ["//visibility:public"])
+
+exports_files(glob([
+    "bin/*",
+    "share/include-what-you-use/*",
+]))
+
+filegroup(
+    name = "bin",
+    srcs = glob(["bin/*"]),
+)
+

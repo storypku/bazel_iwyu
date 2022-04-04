@@ -33,4 +33,4 @@
 /user.bazelrc
 
 /bazel-*
-
+/external

@@ -40,13 +40,10 @@ def _run_iwyu(ctx, iwyu_binary, flags, compilation_context, infile):
     ctx.actions.run_shell(
         inputs = inputs,
         outputs = [output_file],
-        command = "{0} {1} {2}".format(iwyu_binary, output_path, " ".join(args)),
+        command = "{0} {2} 1>{1} 2>&1".format(iwyu_binary, output_path, " ".join(args)),
         mnemonic = "iwyu",
         progress_message = "Run include-what-you-use on {}".format(infile.short_path),
         execution_requirements = {
-            # without "no-sandbox" flag the clang-tidy can not find a .clang-tidy file in the
-            # closest parent, because the .clang-tidy file is placed in a "clang_tidy" shell
-            # script runfiles, which is not a parent directory for any C/C++ source file
             "no-sandbox": "1",
         },
     )
@@ -91,6 +88,10 @@ def _safe_flags(flags):
 
     return [flag for flag in flags if flag not in unsupported_flags and not flag.startswith("--sysroot")]
 
+def _iwyu_binary_path(ctx):
+    files = [s for s in ctx.attr._iwyu_binary.files.to_list() if s.is_source]
+    return files[0].path if len(files) > 0 else "include-what-you-use"
+
 def _iwyu_aspect_impl(target, ctx):
     # Interest in C, C++, and CUDA(not-ready) targets only
     if not CcInfo in target:
@@ -106,11 +107,7 @@ def _iwyu_aspect_impl(target, ctx):
             print("{}: no-op. CUDA support is not ready. Ref: {}".format(target.label, _IWYU_ISSUE_950))
             return []
 
-    binary_files = [s for s in ctx.attr._iwyu_binary.files.to_list() if s.is_source]
-    if not binary_files:
-        fail("No binary/script for {}".format(ctx.attr._iwyu_binary.label))
-    iwyu_binary = binary_files[0].path
-
+    iwyu_binary = _iwyu_binary_path(ctx)
     iwyu_mappings = [m.path for m in ctx.attr._iwyu_mappings.files.to_list()]
 
     toolchain_flags = _toolchain_flags(ctx)
@@ -133,7 +130,7 @@ iwyu_aspect = aspect(
     fragments = ["cpp"],
     attrs = {
         "_cc_toolchain": attr.label(default = Label("@bazel_tools//tools/cpp:current_cc_toolchain")),
-        "_iwyu_binary": attr.label(default = Label("//bazel/iwyu:iwyu")),
+        "_iwyu_binary": attr.label(default = "@iwyu_prebuilt_pkg//:bin/include-what-you-use", allow_single_file = True),
         "_iwyu_mappings": attr.label(default = Label("//bazel/iwyu:custom_mappings")),
     },
     toolchains = ["@bazel_tools//tools/cpp:toolchain_type"],
