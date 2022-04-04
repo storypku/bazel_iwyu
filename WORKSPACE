@@ -1,6 +1,9 @@
 workspace(name = "com_github_storypku_bazel_iwyu")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@com_github_storypku_bazel_iwyu//bazel:dependencies.bzl", "bazel_iwyu_dependencies")
+
+bazel_iwyu_dependencies()
 
 absl_version = "20211102.0"
 
