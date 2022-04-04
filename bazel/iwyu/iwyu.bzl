@@ -40,7 +40,11 @@ def _run_iwyu(ctx, iwyu_binary, flags, compilation_context, infile):
     ctx.actions.run_shell(
         inputs = inputs,
         outputs = [output_file],
-        command = "{0} {2} 1>{1} 2>&1".format(iwyu_binary, output_path, " ".join(args)),
+        command = """{0} {2} 1>{1} 2>&1 && echo "Output saved to {1}" """.format(
+            iwyu_binary,
+            output_path,
+            " ".join(args),
+        ),
         mnemonic = "iwyu",
         progress_message = "Run include-what-you-use on {}".format(infile.short_path),
         execution_requirements = {
@@ -99,7 +103,7 @@ def _iwyu_aspect_impl(target, ctx):
 
     srcs = _rule_sources(ctx)
     if len(srcs) == 0:
-        print("{}: no-op. No 'srcs' in rule.".format(target.label))
+        # print("{}: no-op. No 'srcs' in rule.".format(target.label))
         return []
 
     for s in srcs:
