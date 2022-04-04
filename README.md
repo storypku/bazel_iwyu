@@ -34,6 +34,7 @@ external/iwyu_prebuilt_pkg/bin/fix_includes.py --nosafe_headers < bazel-bin/path
 ## TODOs
 
 1. [x] Ship prebuilt include-what-you-use binary releases
-2. [ ] Make this repo accessable as an external dependency.
+2. [x] Make this repo accessable as an external dependency.
 3. [ ] More IWYU mappings for other 3rd-party libraries, e.g., ABSL, Boost, Eigen, etc.
 4. [ ] Gather multiple X.iwyu.txt into one.
+5. [ ] Support for custom mapping files and IWYU options from users.
