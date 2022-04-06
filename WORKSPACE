@@ -5,6 +5,10 @@ load("@com_github_storypku_bazel_iwyu//bazel:dependencies.bzl", "bazel_iwyu_depe
 
 bazel_iwyu_dependencies()
 
+load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
+
+bazel_skylib_workspace()
+
 absl_version = "20211102.0"
 
 http_archive(

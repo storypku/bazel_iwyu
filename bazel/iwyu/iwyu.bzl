@@ -1,8 +1,9 @@
+load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
+
 # NOTE(Jiaming):
 # Inspired by the Bazel-Clang-Tidy Project available at https://github.com/erenon/bazel_clang_tidy.
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
 
-_IWYU_OPTIONS = ["--no_fwd_decls", "--quoted_includes_first", "--cxx17ns", "--max_line_length=127"]
 _IWYU_ISSUE_950 = "https://github.com/include-what-you-use/include-what-you-use/issues/950"
 
 def _run_iwyu(ctx, iwyu_binary, flags, compilation_context, infile):
@@ -107,16 +108,17 @@ def _iwyu_aspect_impl(target, ctx):
 
     for s in srcs:
         if s.basename.endswith(".cu.cc") or s.extension == "cu":
-            print("{}: no-op. CUDA support is not ready. Ref: {}".format(target.label, _IWYU_ISSUE_950))
+            print("{}: no-op. CUDA support NOT ready yet. Ref: {}".format(target.label, _IWYU_ISSUE_950))
             return []
 
     iwyu_binary = _iwyu_binary_path(ctx)
+    iwyu_options = ctx.attr._iwyu_opts[BuildSettingInfo].value
     iwyu_mappings = [m.path for m in ctx.attr._iwyu_mappings.files.to_list()]
 
     toolchain_flags = _toolchain_flags(ctx)
     rule_flags = ctx.rule.attr.copts if hasattr(ctx.rule.attr, "copts") else []
 
-    overall_flags = ["-Xiwyu {}".format(opt) for opt in _IWYU_OPTIONS]
+    overall_flags = ["-Xiwyu {}".format(opt) for opt in iwyu_options]
     overall_flags.extend(["-Xiwyu --mapping_file={}".format(m) for m in iwyu_mappings])
     overall_flags.extend(_safe_flags(toolchain_flags + rule_flags))
 
@@ -135,6 +137,7 @@ iwyu_aspect = aspect(
         "_cc_toolchain": attr.label(default = Label("@bazel_tools//tools/cpp:current_cc_toolchain")),
         "_iwyu_binary": attr.label(default = "@iwyu_prebuilt_pkg//:bin/include-what-you-use", allow_single_file = True),
         "_iwyu_mappings": attr.label(default = Label("//:iwyu_mappings")),
+        "_iwyu_opts": attr.label(default = Label("//:iwyu_opts")),
     },
     toolchains = ["@bazel_tools//tools/cpp:toolchain_type"],
 )
