@@ -1,4 +1,4 @@
-# IWYU: Bazel Integration
+# Bazel Integration for IWYU
 
 Bazel Support for IWYU. No Compilation Database needed.
 Inspired by the [Bazel-Clang-Tidy](https://github.com/erenon/bazel_clang_tidy) project.
@@ -68,19 +68,13 @@ bazel build --config=iwyu //path/to/pkg:target
 
 4. Apply fixes
 
-Suppose IWYU binaries/scripts can be found on PATH:
-
-```shell
-fix_includes.py --nosafe_headers < bazel-bin/path/to/pkg/<target>.iwyu.txt
-```
-
-for Linux-x86_64, You may find it convenient to have the top-level "external" symlink
+Create a top-level "external" symlink,
 
 ```shell
 ln -s bazel-out/../../../external external
 ```
 
-And run
+and run
 
 ```shell
 external/iwyu_prebuilt_pkg/bin/fix_includes.py --nosafe_headers < bazel-bin/path/to/pkg/<target>.iwyu.txt
