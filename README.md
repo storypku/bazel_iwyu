@@ -1,7 +1,6 @@
-# Bazel Integration for IWYU
+# bazel_iwyu: Bazel Support for IWYU
 
-Bazel Support for IWYU. No Compilation Database needed.
-Inspired by the [Bazel-Clang-Tidy](https://github.com/erenon/bazel_clang_tidy) project.
+`bazel_iwyu` aims to provide C++ developers an convenient way to use IWYU with Bazel. It was inspired by the [bazel_clang_tidy](https://github.com/erenon/bazel_clang_tidy) project. Just like `bazel_clang_tidy`, you can run IWYU on Bazel C++ targets directly; there is NO need to generate a compilation database first.
 
 ## How To Use
 
