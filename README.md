@@ -32,8 +32,8 @@ build:iwyu --aspects @com_github_storypku_bazel_iwyu//bazel/iwyu:iwyu.bzl%iwyu_a
 build:iwyu --output_groups=report
 ```
 
-If you would like to use your own IWYU mappings, put all your IMP files inside one directory, say,
-`bazel/iwyu/mappings`, and create a filegroup target for it:
+If you would like to use your own IWYU mappings, put all your IMP files in a directory, say,
+`bazel/iwyu/mappings`, and create a `filegroup` target for it:
 
 ```python
 # bazel/iwyu/BUILD.bazel
