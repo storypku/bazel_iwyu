@@ -14,15 +14,18 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
     name = "com_github_storypku_bazel_iwyu",
-    strip_prefix = "bazel_iwyu-0.0.3",
-    sha256 = "5952e03b4c0508450f29bf04cb7816b56500064b83a59042f045505cd7a09d49",
+    strip_prefix = "bazel_iwyu-0.0.4",
+    sha256 = "TODO",
     urls = [
-        "https://github.com/storypku/bazel_iwyu/archive/0.0.3.tar.gz",
+        "https://github.com/storypku/bazel_iwyu/archive/0.0.4.tar.gz",
     ],
 )
 
 load("@com_github_storypku_bazel_iwyu//bazel:dependencies.bzl", "bazel_iwyu_dependencies")
 bazel_iwyu_dependencies()
+
+load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
+bazel_skylib_workspace()
 ```
 
 3. Add the following to your .bazelrc.
@@ -31,6 +34,7 @@ bazel_iwyu_dependencies()
 build:iwyu --aspects @com_github_storypku_bazel_iwyu//bazel/iwyu:iwyu.bzl%iwyu_aspect
 build:iwyu --output_groups=report
 ```
+
 
 If you would like to use your own IWYU mappings, put all your IMP files in a directory, say,
 `bazel/iwyu/mappings`, and create a `filegroup` target for it:
@@ -45,10 +49,16 @@ filegroup(
 )
 ```
 
-Then add the following to your `.bazelrc`,
+Then add the following config to your `.bazelrc` to make it effective.
 
 ```
 build:iwyu --@com_github_storypku_bazel_iwyu//:iwyu_mappings=//bazel/iwyu:my_mappings
+```
+
+If custom IWYU options should be used, change the line below:
+
+```
+build:iwyu --@com_github_storypku_bazel_iwyu//:iwyu_opts=--verbose=3,--no_fwd_decls,--cxx17ns,--max_line_length=127
 ```
 
 4. Run IWYU
@@ -78,12 +88,12 @@ external/iwyu_prebuilt_pkg/bin/fix_includes.py --nosafe_headers < bazel-bin/path
 ```
 
 ## TODOs
-
 1. [x] Ship prebuilt include-what-you-use binary releases
 2. [x] Make this repo accessable as an external dependency.
-3. [ ] More IWYU mappings for other 3rd-party libraries, e.g., ABSL, Boost, Eigen, etc.
-4. [ ] Gather multiple X.iwyu.txt into one.
-5. [ ] Support for custom mapping files and IWYU options from users.
+3. [x] Support for custom mapping files and IWYU options from users.
+4. [ ] Aggragate IWYU output files (*.iwyu.txt) into one.
+5. [ ] More IWYU mappings for other 3rd-party libraries, e.g., ABSL, Boost, Eigen, etc.
+6. [ ] CI: Integrate with GitHub Workflows.
 
 ## How to Contribute
 As with other OSS projects, suggestions and PRs are welcome!
