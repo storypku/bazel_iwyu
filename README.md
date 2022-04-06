@@ -98,7 +98,7 @@ external/iwyu_prebuilt_pkg/bin/fix_includes.py --nosafe_headers < bazel-bin/path
 1. [x] Ship prebuilt include-what-you-use binary releases
 2. [x] Make this repo accessable as an external dependency.
 3. [x] Support for custom mapping files and IWYU options from users.
-4. [ ] Aggragate IWYU output files (*.iwyu.txt) into one.
+4. [ ] Aggregate IWYU output files (*.iwyu.txt) into one.
 5. [ ] More IWYU mappings for other 3rd-party libraries, e.g., ABSL, Boost, Eigen, etc.
 6. [ ] CUDA support?  Ref: [rules_cuda](https://github.com/tensorflow/runtime/tree/master/third_party/rules_cuda)
 7. [ ] CI: Integrate with GitHub Workflows.
