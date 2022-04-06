@@ -14,10 +14,10 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
     name = "com_github_storypku_bazel_iwyu",
-    sha256 = "043b554c2cdaa7e7c56f2341452498a63f282baf9f086b08b29783c9b0fb6597",
-    strip_prefix = "bazel_iwyu-0.0.2",
+    strip_prefix = "bazel_iwyu-0.0.3",
+    sha256 = "TODO",
     urls = [
-        "https://github.com/storypku/bazel_iwyu/archive/0.0.2.tar.gz",
+        "https://github.com/storypku/bazel_iwyu/archive/0.0.3.tar.gz",
     ],
 )
 
@@ -25,11 +25,30 @@ load("@com_github_storypku_bazel_iwyu//bazel:dependencies.bzl", "bazel_iwyu_depe
 bazel_iwyu_dependencies()
 ```
 
-3. Add the following to your bazelrc. (E.g., `.bazelrc`)
+3. Add the following to your .bazelrc.
 
 ```
 build:iwyu --aspects @com_github_storypku_bazel_iwyu//bazel/iwyu:iwyu.bzl%iwyu_aspect
 build:iwyu --output_groups=report
+```
+
+If you would like to use your own IWYU mappings, put all your IMP files inside one directory, say,
+`bazel/iwyu/mappings`, and create a filegroup target for it:
+
+```python
+# bazel/iwyu/BUILD.bazel
+filegroup(
+    name = "my_mappings",
+    srcs = glob([
+        "mappings/*.imp",
+    ]),
+)
+```
+
+Then add the following to your `.bazelrc`,
+
+```
+build:iwyu --@com_github_storypku_bazel_iwyu//:iwyu_mappings=//bazel/iwyu:my_mappings
 ```
 
 4. Run IWYU
