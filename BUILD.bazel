@@ -1,1 +1,15 @@
 package(default_visibility = ["//visibility:public"])
+
+label_flag(
+    name = "iwyu_mappings",
+    build_setting_default = ":iwyu_mappings_default",
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "iwyu_mappings_default",
+    srcs = glob([
+        "mappings/*.imp",
+    ]),
+)
+

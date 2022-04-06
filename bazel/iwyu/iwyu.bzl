@@ -135,7 +135,7 @@ iwyu_aspect = aspect(
     attrs = {
         "_cc_toolchain": attr.label(default = Label("@bazel_tools//tools/cpp:current_cc_toolchain")),
         "_iwyu_binary": attr.label(default = "@iwyu_prebuilt_pkg//:bin/include-what-you-use", allow_single_file = True),
-        "_iwyu_mappings": attr.label(default = Label("//bazel/iwyu:custom_mappings")),
+        "_iwyu_mappings": attr.label(default = Label("//:iwyu_mappings")),
     },
     toolchains = ["@bazel_tools//tools/cpp:toolchain_type"],
 )
