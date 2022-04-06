@@ -93,8 +93,7 @@ def _safe_flags(flags):
     return [flag for flag in flags if flag not in unsupported_flags and not flag.startswith("--sysroot")]
 
 def _iwyu_binary_path(ctx):
-    files = [s for s in ctx.attr._iwyu_binary.files.to_list() if s.is_source]
-    return files[0].path if len(files) > 0 else "include-what-you-use"
+    return ctx.file._iwyu_binary.path
 
 def _iwyu_aspect_impl(target, ctx):
     # Interest in C, C++, and CUDA(not-ready) targets only
