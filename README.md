@@ -96,8 +96,7 @@ external/iwyu_prebuilt_pkg/bin/fix_includes.py --nosafe_headers < bazel-bin/path
 6. [ ] CUDA support?  Ref: [rules_cuda](https://github.com/tensorflow/runtime/tree/master/third_party/rules_cuda)
 7. [ ] CI: Integrate with GitHub Workflows.
 
-## How to Contribute
+## Contributing
+As with other OSS projects, PRs are always welcome. 
 
-As with other OSS projects, suggestions and PRs are welcome! For newcomers to GitHub,
-please refer to [GitHub Docs: Creating a Pull Request](https://docs.github.com/en/articles/creating-a-pull-request).
 
