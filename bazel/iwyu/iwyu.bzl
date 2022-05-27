@@ -1,12 +1,27 @@
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
-
-# NOTE(Jiaming):
-# Inspired by the Bazel-Clang-Tidy Project available at https://github.com/erenon/bazel_clang_tidy.
+load(
+    "@bazel_tools//tools/build_defs/cc:action_names.bzl",
+    "CPP_COMPILE_ACTION_NAME",
+    "C_COMPILE_ACTION_NAME",
+)
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
 
-_IWYU_ISSUE_950 = "https://github.com/include-what-you-use/include-what-you-use/issues/950"
+_CUDA_EXTENSIONS = ["cu", "cuh"]
+_CPP_HEADER_EXTENSIONS = ["hh", "hxx", "ipp", "hpp"]
+_C_OR_CPP_HEADER_EXTENSIONS = ["h"] + _CPP_HEADER_EXTENSIONS
+_CPP_EXTENSIONS = ["cc", "cpp", "cxx"] + _CPP_HEADER_EXTENSIONS
 
-def _run_iwyu(ctx, iwyu_binary, flags, compilation_context, infile):
+def _is_cpp_target(srcs):
+    if all([src.extension in _C_OR_CPP_HEADER_EXTENSIONS for src in srcs]):
+        return True  # assume header-only lib in C++
+    return any([src.extension in _CPP_EXTENSIONS for src in srcs])
+
+def _is_cuda_target(srcs):
+    return any([src.extension in _CUDA_EXTENSIONS for src in srcs])
+
+def _run_iwyu(ctx, iwyu_binary, flags, target, infile):
+    compilation_context = target[CcInfo].compilation_context
+
     inputs = depset(direct = [infile], transitive = [compilation_context.headers])
 
     # add args specified by iwyu_options, the toolchain, on the command line and rule copts
@@ -34,7 +49,9 @@ def _run_iwyu(ctx, iwyu_binary, flags, compilation_context, infile):
     # add source to check
     args.append(infile.path)
 
-    output_file = ctx.actions.declare_file(infile.basename + ".iwyu.txt")
+    output_file = ctx.actions.declare_file(
+        "{}.{}.iwyu.txt".format(target.label.name, infile.basename),
+    )
     output_path = output_file.path
 
     # https://github.com/bazelbuild/bazel/issues/5511
@@ -57,29 +74,46 @@ def _run_iwyu(ctx, iwyu_binary, flags, compilation_context, infile):
 def _rule_sources(ctx):
     srcs = []
 
-    # make sure the rule has a srcs attribute
     if hasattr(ctx.rule.attr, "srcs"):
         for src in ctx.rule.attr.srcs:
             # https://bazel.build/rules/lib/File#is_source
             srcs += [s for s in src.files.to_list() if s.is_source]
     return srcs
 
-def _toolchain_flags(ctx):
+def _toolchain_flags(ctx, is_cpp_target):
     cc_toolchain = find_cpp_toolchain(ctx)
     feature_configuration = cc_common.configure_features(
         ctx = ctx,
         cc_toolchain = cc_toolchain,
+        requested_features = ctx.features,
+        unsupported_features = ctx.disabled_features,
     )
-    compile_variables = cc_common.create_compile_variables(
-        feature_configuration = feature_configuration,
-        cc_toolchain = cc_toolchain,
-        user_compile_flags = ctx.fragments.cpp.cxxopts + ctx.fragments.cpp.copts,
-    )
-    flags = cc_common.get_memory_inefficient_command_line(
-        feature_configuration = feature_configuration,
-        action_name = "c++-compile",  # tools/build_defs/cc/action_names.bzl CPP_COMPILE_ACTION_NAME
-        variables = compile_variables,
-    )
+
+    flags = None
+    if is_cpp_target:
+        compile_variables = cc_common.create_compile_variables(
+            feature_configuration = feature_configuration,
+            cc_toolchain = cc_toolchain,
+            user_compile_flags = ctx.fragments.cpp.cxxopts +
+                                 ctx.fragments.cpp.copts,
+            add_legacy_cxx_options = True,
+        )
+        flags = cc_common.get_memory_inefficient_command_line(
+            feature_configuration = feature_configuration,
+            action_name = CPP_COMPILE_ACTION_NAME,
+            variables = compile_variables,
+        )
+    else:
+        compile_variables = cc_common.create_compile_variables(
+            feature_configuration = feature_configuration,
+            cc_toolchain = cc_toolchain,
+            user_compile_flags = ctx.fragments.cpp.copts,
+        )
+        flags = cc_common.get_memory_inefficient_command_line(
+            feature_configuration = feature_configuration,
+            action_name = C_COMPILE_ACTION_NAME,
+            variables = compile_variables,
+        )
     return flags
 
 def _safe_flags(flags):
@@ -97,34 +131,35 @@ def _iwyu_binary_path(ctx):
     return ctx.file._iwyu_binary.path
 
 def _iwyu_aspect_impl(target, ctx):
-    # Interest in C, C++, and CUDA(not-ready) targets only
+    # Interested in C/C++/CUDA(not-ready) targets only
     if not CcInfo in target:
         return []
 
     srcs = _rule_sources(ctx)
-    if len(srcs) == 0:
-        # print("{}: no-op. No 'srcs' in rule.".format(target.label))
-        return []
 
-    for s in srcs:
-        if s.basename.endswith(".cu.cc") or s.extension == "cu":
-            print("{}: no-op. CUDA support NOT ready yet. Ref: {}".format(target.label, _IWYU_ISSUE_950))
-            return []
+    # Ref: https://github.com/include-what-you-use/include-what-you-use/issues/950
+    if len(srcs) == 0 or _is_cuda_target(srcs):
+        return []
 
     iwyu_binary = _iwyu_binary_path(ctx)
     iwyu_options = ctx.attr._iwyu_opts[BuildSettingInfo].value
     iwyu_mappings = [m.path for m in ctx.attr._iwyu_mappings.files.to_list()]
 
-    toolchain_flags = _toolchain_flags(ctx)
-    rule_flags = ctx.rule.attr.copts if hasattr(ctx.rule.attr, "copts") else []
+    is_cpp_target = _is_cpp_target(srcs)
+    toolchain_flags = _toolchain_flags(ctx, is_cpp_target)
+
+    rule_flags = []
+    if is_cpp_target:
+        rule_flags.extend(["-x", "c++"])
+
+    if hasattr(ctx.rule.attr, "copts"):
+        rule_flags.extend(ctx.rule.attr.copts)
 
     overall_flags = ["-Xiwyu {}".format(opt) for opt in iwyu_options]
     overall_flags.extend(["-Xiwyu --mapping_file={}".format(m) for m in iwyu_mappings])
     overall_flags.extend(_safe_flags(toolchain_flags + rule_flags))
 
-    compilation_context = target[CcInfo].compilation_context
-
-    outputs = [_run_iwyu(ctx, iwyu_binary, overall_flags, compilation_context, src) for src in srcs]
+    outputs = [_run_iwyu(ctx, iwyu_binary, overall_flags, target, src) for src in srcs]
     return [
         OutputGroupInfo(report = depset(direct = outputs)),
     ]
