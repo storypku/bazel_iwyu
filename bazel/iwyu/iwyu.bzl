@@ -6,10 +6,10 @@ load(
 )
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
 
-_CUDA_EXTENSIONS = ["cu", "cuh"]
 _CPP_HEADER_EXTENSIONS = ["hh", "hxx", "ipp", "hpp"]
 _C_OR_CPP_HEADER_EXTENSIONS = ["h"] + _CPP_HEADER_EXTENSIONS
 _CPP_EXTENSIONS = ["cc", "cpp", "cxx"] + _CPP_HEADER_EXTENSIONS
+_CUDA_EXTENSIONS = ["cu", "cuh"]
 
 def _is_cpp_target(srcs):
     if all([src.extension in _C_OR_CPP_HEADER_EXTENSIONS for src in srcs]):
@@ -19,65 +19,66 @@ def _is_cpp_target(srcs):
 def _is_cuda_target(srcs):
     return any([src.extension in _CUDA_EXTENSIONS for src in srcs])
 
-def _run_iwyu(ctx, iwyu_binary, flags, target, infile):
+def _run_iwyu(ctx, iwyu_executable, flags, target, infile):
     compilation_context = target[CcInfo].compilation_context
 
     inputs = depset(direct = [infile], transitive = [compilation_context.headers])
+    outfile = ctx.actions.declare_file(
+        "{}.{}.iwyu.txt".format(target.label.name, infile.basename),
+    )
 
     # add args specified by iwyu_options, the toolchain, on the command line and rule copts
-    args = flags
+    args = ctx.actions.args()
+    args.add(outfile)
+
+    iwyu_options = ctx.attr._iwyu_opts[BuildSettingInfo].value
+    args.add_all(iwyu_options, before_each = "-Xiwyu")
+
+    iwyu_mappings = ctx.attr._iwyu_mappings.files.to_list()
+    args.add_all(["--mapping_file={}".format(m.path) for m in iwyu_mappings], before_each = "-Xiwyu")
+
+    args.add_all(flags)
 
     # add defines
     for define in compilation_context.defines.to_list():
-        args.append("-D" + define)
+        args.add("-D" + define)
 
     for define in compilation_context.local_defines.to_list():
-        args.append("-D" + define)
+        args.add("-D" + define)
 
     # add includes
     for inc in compilation_context.framework_includes.to_list():
-        args.append("-F" + inc)
+        args.add("-F" + inc)
 
     for inc in compilation_context.includes.to_list():
-        args.append("-I" + inc)
-    for inc in compilation_context.quote_includes.to_list():
-        args.extend(["-iquote", inc])
+        args.add("-I" + inc)
 
-    for inc in compilation_context.system_includes.to_list():
-        args.extend(["-isystem", inc])
+    args.add_all(compilation_context.quote_includes.to_list(), before_each = "-iquote")
+    args.add_all(compilation_context.system_includes.to_list(), before_each = "-isystem")
 
     # add source to check
-    args.append(infile.path)
-
-    output_file = ctx.actions.declare_file(
-        "{}.{}.iwyu.txt".format(target.label.name, infile.basename),
-    )
-    output_path = output_file.path
+    args.add(infile)
 
     # https://github.com/bazelbuild/bazel/issues/5511
-    ctx.actions.run_shell(
+    ctx.actions.run(
         inputs = inputs,
-        outputs = [output_file],
-        command = """{0} {2} 1>{1} 2>&1 && echo "Output saved to {1}" """.format(
-            iwyu_binary,
-            output_path,
-            " ".join(args),
-        ),
+        outputs = [outfile],
+        arguments = [args],
+        executable = iwyu_executable,
         mnemonic = "iwyu",
         progress_message = "Run include-what-you-use on {}".format(infile.short_path),
         execution_requirements = {
             "no-sandbox": "1",
         },
     )
-    return output_file
+    return outfile
 
 def _rule_sources(ctx):
     srcs = []
-
     if hasattr(ctx.rule.attr, "srcs"):
         for src in ctx.rule.attr.srcs:
             # https://bazel.build/rules/lib/File#is_source
-            srcs += [s for s in src.files.to_list() if s.is_source]
+            srcs += [f for f in src.files.to_list() if f.is_source]
     return srcs
 
 def _toolchain_flags(ctx, is_cpp_target):
@@ -127,11 +128,8 @@ def _safe_flags(flags):
 
     return [flag for flag in flags if flag not in unsupported_flags and not flag.startswith("--sysroot")]
 
-def _iwyu_binary_path(ctx):
-    return ctx.file._iwyu_binary.path
-
 def _iwyu_aspect_impl(target, ctx):
-    # Interested in C/C++/CUDA(not-ready) targets only
+    # Interested in C, C++, and CUDA (not-ready) targets only
     if not CcInfo in target:
         return []
 
@@ -141,36 +139,29 @@ def _iwyu_aspect_impl(target, ctx):
     if len(srcs) == 0 or _is_cuda_target(srcs):
         return []
 
-    iwyu_binary = _iwyu_binary_path(ctx)
-    iwyu_options = ctx.attr._iwyu_opts[BuildSettingInfo].value
-    iwyu_mappings = [m.path for m in ctx.attr._iwyu_mappings.files.to_list()]
+    iwyu_executable = ctx.attr._iwyu_executable.files_to_run
 
     is_cpp_target = _is_cpp_target(srcs)
     toolchain_flags = _toolchain_flags(ctx, is_cpp_target)
 
-    rule_flags = []
-    if is_cpp_target:
-        rule_flags.extend(["-x", "c++"])
-
+    rule_flags = ["-x", "c++"] if is_cpp_target else []
     if hasattr(ctx.rule.attr, "copts"):
         rule_flags.extend(ctx.rule.attr.copts)
 
-    overall_flags = ["-Xiwyu {}".format(opt) for opt in iwyu_options]
-    overall_flags.extend(["-Xiwyu --mapping_file={}".format(m) for m in iwyu_mappings])
-    overall_flags.extend(_safe_flags(toolchain_flags + rule_flags))
+    all_flags = _safe_flags(toolchain_flags + rule_flags)
 
-    outputs = [_run_iwyu(ctx, iwyu_binary, overall_flags, target, src) for src in srcs]
+    outputs = [_run_iwyu(ctx, iwyu_executable, all_flags, target, src) for src in srcs]
     return [
         OutputGroupInfo(report = depset(direct = outputs)),
     ]
 
-# NOTE(Jiaming): You may need to perform `bazel clean` if mappings/*.imp was updated.
+# NOTE(storypku): You may need to perform `bazel clean` if mappings/*.imp were updated.
 iwyu_aspect = aspect(
     implementation = _iwyu_aspect_impl,
     fragments = ["cpp"],
     attrs = {
         "_cc_toolchain": attr.label(default = Label("@bazel_tools//tools/cpp:current_cc_toolchain")),
-        "_iwyu_binary": attr.label(default = "@iwyu_prebuilt_pkg//:bin/include-what-you-use", allow_single_file = True),
+        "_iwyu_executable": attr.label(default = Label("//bazel/iwyu:run_iwyu")),
         "_iwyu_mappings": attr.label(default = Label("//:iwyu_mappings")),
         "_iwyu_opts": attr.label(default = Label("//:iwyu_opts")),
     },

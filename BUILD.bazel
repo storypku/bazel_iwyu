@@ -20,8 +20,10 @@ filegroup(
 string_list_flag(
     name = "iwyu_opts",
     build_setting_default = [
-        "--no_fwd_decls",
         "--cxx17ns",
+        "--error=1",
         "--max_line_length=127",
+        "--no_fwd_decls",
+        # "--transitive_includes_only",
     ],
 )
