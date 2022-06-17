@@ -24,6 +24,6 @@ string_list_flag(
         "--error=1",
         "--max_line_length=127",
         "--no_fwd_decls",
-        # "--transitive_includes_only",
+        "--transitive_includes_only",
     ],
 )
