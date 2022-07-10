@@ -3,7 +3,13 @@ set -u
 
 readonly RED='\033[0;31m'
 readonly RESET='\033[0m'
-readonly IWYU_BINARY="external/iwyu_prebuilt_pkg/bin/include-what-you-use"
+
+IWYU_BINARY="external/iwyu_prebuilt_pkg/bin/include-what-you-use"
+
+# FIXME(storypku): The path above doesn't work for Remote execution
+if [[ ! -x "${IWYU_BINARY}" ]]; then
+    IWYU_BINARY="include-what-you-use"
+fi
 
 function error() {
   (echo >&2 -e "${RED}[ERROR]${RESET} $*")

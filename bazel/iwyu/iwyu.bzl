@@ -19,10 +19,16 @@ def _is_cpp_target(srcs):
 def _is_cuda_target(srcs):
     return any([src.extension in _CUDA_EXTENSIONS for src in srcs])
 
-def _run_iwyu(ctx, iwyu_executable, flags, target, infile):
+def _run_iwyu(
+        ctx,
+        iwyu_sh_wrapper,
+        iwyu_binary,
+        iwyu_mappings,
+        iwyu_options,
+        flags,
+        target,
+        infile):
     compilation_context = target[CcInfo].compilation_context
-
-    inputs = depset(direct = [infile], transitive = [compilation_context.headers])
     outfile = ctx.actions.declare_file(
         "{}.{}.iwyu.txt".format(target.label.name, infile.basename),
     )
@@ -31,11 +37,12 @@ def _run_iwyu(ctx, iwyu_executable, flags, target, infile):
     args = ctx.actions.args()
     args.add(outfile)
 
-    iwyu_options = ctx.attr._iwyu_opts[BuildSettingInfo].value
     args.add_all(iwyu_options, before_each = "-Xiwyu")
 
-    iwyu_mappings = ctx.attr._iwyu_mappings.files.to_list()
-    args.add_all(["--mapping_file={}".format(m.path) for m in iwyu_mappings], before_each = "-Xiwyu")
+    args.add_all(
+        ["--mapping_file={}".format(m.path) for m in iwyu_mappings],
+        before_each = "-Xiwyu",
+    )
 
     args.add_all(flags)
 
@@ -59,12 +66,17 @@ def _run_iwyu(ctx, iwyu_executable, flags, target, infile):
     # add source to check
     args.add(infile)
 
+    inputs = depset(
+        direct = [infile] + iwyu_mappings,
+        transitive = [compilation_context.headers],
+    )
+
     # https://github.com/bazelbuild/bazel/issues/5511
     ctx.actions.run(
         inputs = inputs,
         outputs = [outfile],
         arguments = [args],
-        executable = iwyu_executable,
+        executable = iwyu_sh_wrapper,
         mnemonic = "iwyu",
         progress_message = "Run include-what-you-use on {}".format(infile.short_path),
         execution_requirements = {
@@ -95,8 +107,7 @@ def _toolchain_flags(ctx, is_cpp_target):
         compile_variables = cc_common.create_compile_variables(
             feature_configuration = feature_configuration,
             cc_toolchain = cc_toolchain,
-            user_compile_flags = ctx.fragments.cpp.cxxopts +
-                                 ctx.fragments.cpp.copts,
+            user_compile_flags = ctx.fragments.cpp.cxxopts + ctx.fragments.cpp.copts,
             add_legacy_cxx_options = True,
         )
         flags = cc_common.get_memory_inefficient_command_line(
@@ -126,7 +137,11 @@ def _safe_flags(flags):
         "-fstack-usage",
     ]
 
-    return [flag for flag in flags if flag not in unsupported_flags and not flag.startswith("--sysroot")]
+    return [
+        flag
+        for flag in flags
+        if flag not in unsupported_flags and not flag.startswith("--sysroot")
+    ]
 
 def _iwyu_aspect_impl(target, ctx):
     # Interested in C, C++, and CUDA (not-ready) targets only
@@ -139,7 +154,10 @@ def _iwyu_aspect_impl(target, ctx):
     if len(srcs) == 0 or _is_cuda_target(srcs):
         return []
 
-    iwyu_executable = ctx.attr._iwyu_executable.files_to_run
+    iwyu_sh_wrapper = ctx.attr._iwyu_sh_wrapper.files_to_run
+    iwyu_binary = ctx.file._iwyu_binary
+    iwyu_mappings = ctx.attr._iwyu_mappings.files.to_list()
+    iwyu_options = ctx.attr._iwyu_opts[BuildSettingInfo].value
 
     is_cpp_target = _is_cpp_target(srcs)
     toolchain_flags = _toolchain_flags(ctx, is_cpp_target)
@@ -150,7 +168,19 @@ def _iwyu_aspect_impl(target, ctx):
 
     all_flags = _safe_flags(toolchain_flags + rule_flags)
 
-    outputs = [_run_iwyu(ctx, iwyu_executable, all_flags, target, src) for src in srcs]
+    outputs = [
+        _run_iwyu(
+            ctx,
+            iwyu_sh_wrapper,
+            iwyu_binary,
+            iwyu_mappings,
+            iwyu_options,
+            all_flags,
+            target,
+            src,
+        )
+        for src in srcs
+    ]
     return [
         OutputGroupInfo(report = depset(direct = outputs)),
     ]
@@ -160,10 +190,18 @@ iwyu_aspect = aspect(
     implementation = _iwyu_aspect_impl,
     fragments = ["cpp"],
     attrs = {
-        "_cc_toolchain": attr.label(default = Label("@bazel_tools//tools/cpp:current_cc_toolchain")),
-        "_iwyu_executable": attr.label(default = Label("//bazel/iwyu:run_iwyu")),
+        "_cc_toolchain": attr.label(
+            default = Label("@bazel_tools//tools/cpp:current_cc_toolchain"),
+        ),
+        "_iwyu_binary": attr.label(
+            executable = True,
+            cfg = "exec",
+            allow_single_file = True,
+            default = Label("@iwyu_prebuilt_pkg//:bin/include-what-you-use"),
+        ),
         "_iwyu_mappings": attr.label(default = Label("//:iwyu_mappings")),
         "_iwyu_opts": attr.label(default = Label("//:iwyu_opts")),
+        "_iwyu_sh_wrapper": attr.label(default = Label("//bazel/iwyu:run_iwyu")),
     },
     toolchains = ["@bazel_tools//tools/cpp:toolchain_type"],
 )
