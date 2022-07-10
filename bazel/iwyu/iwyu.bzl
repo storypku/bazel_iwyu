@@ -71,9 +71,6 @@ def _run_iwyu(ctx, iwyu_executable, iwyu_mappings, iwyu_options, flags, target, 
         executable = iwyu_executable,
         mnemonic = "iwyu",
         progress_message = "Run include-what-you-use on {}".format(infile.short_path),
-        execution_requirements = {
-            "no-sandbox": "1",
-        },
     )
     return outfile
 
