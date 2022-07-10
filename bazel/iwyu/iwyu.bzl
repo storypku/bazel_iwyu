@@ -19,15 +19,7 @@ def _is_cpp_target(srcs):
 def _is_cuda_target(srcs):
     return any([src.extension in _CUDA_EXTENSIONS for src in srcs])
 
-def _run_iwyu(
-        ctx,
-        iwyu_sh_wrapper,
-        iwyu_binary,
-        iwyu_mappings,
-        iwyu_options,
-        flags,
-        target,
-        infile):
+def _run_iwyu(ctx, iwyu_executable, iwyu_mappings, iwyu_options, flags, target, infile):
     compilation_context = target[CcInfo].compilation_context
     outfile = ctx.actions.declare_file(
         "{}.{}.iwyu.txt".format(target.label.name, infile.basename),
@@ -76,7 +68,7 @@ def _run_iwyu(
         inputs = inputs,
         outputs = [outfile],
         arguments = [args],
-        executable = iwyu_sh_wrapper,
+        executable = iwyu_executable,
         mnemonic = "iwyu",
         progress_message = "Run include-what-you-use on {}".format(infile.short_path),
         execution_requirements = {
@@ -138,9 +130,7 @@ def _safe_flags(flags):
     ]
 
     return [
-        flag
-        for flag in flags
-        if flag not in unsupported_flags and not flag.startswith("--sysroot")
+        flag for flag in flags if flag not in unsupported_flags and not flag.startswith("--sysroot")
     ]
 
 def _iwyu_aspect_impl(target, ctx):
@@ -154,8 +144,7 @@ def _iwyu_aspect_impl(target, ctx):
     if len(srcs) == 0 or _is_cuda_target(srcs):
         return []
 
-    iwyu_sh_wrapper = ctx.attr._iwyu_sh_wrapper.files_to_run
-    iwyu_binary = ctx.file._iwyu_binary
+    iwyu_executable = ctx.attr._iwyu_executable.files_to_run
     iwyu_mappings = ctx.attr._iwyu_mappings.files.to_list()
     iwyu_options = ctx.attr._iwyu_opts[BuildSettingInfo].value
 
@@ -169,20 +158,10 @@ def _iwyu_aspect_impl(target, ctx):
     all_flags = _safe_flags(toolchain_flags + rule_flags)
 
     outputs = [
-        _run_iwyu(
-            ctx,
-            iwyu_sh_wrapper,
-            iwyu_binary,
-            iwyu_mappings,
-            iwyu_options,
-            all_flags,
-            target,
-            src,
-        )
-        for src in srcs
+        _run_iwyu(ctx, iwyu_executable, iwyu_mappings, iwyu_options, all_flags, target, src) for src in srcs
     ]
     return [
-        OutputGroupInfo(report = depset(direct = outputs)),
+        OutputGroupInfo(report = depset(direct = outputs))
     ]
 
 # NOTE(storypku): You may need to perform `bazel clean` if mappings/*.imp were updated.
@@ -193,15 +172,9 @@ iwyu_aspect = aspect(
         "_cc_toolchain": attr.label(
             default = Label("@bazel_tools//tools/cpp:current_cc_toolchain"),
         ),
-        "_iwyu_binary": attr.label(
-            executable = True,
-            cfg = "exec",
-            allow_single_file = True,
-            default = Label("@iwyu_prebuilt_pkg//:bin/include-what-you-use"),
-        ),
         "_iwyu_mappings": attr.label(default = Label("//:iwyu_mappings")),
         "_iwyu_opts": attr.label(default = Label("//:iwyu_opts")),
-        "_iwyu_sh_wrapper": attr.label(default = Label("//bazel/iwyu:run_iwyu")),
+        "_iwyu_executable": attr.label(default = Label("//bazel/iwyu:run_iwyu")),
     },
     toolchains = ["@bazel_tools//tools/cpp:toolchain_type"],
 )

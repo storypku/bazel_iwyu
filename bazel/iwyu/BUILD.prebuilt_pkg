@@ -1,9 +1,15 @@
 package(default_visibility = ["//visibility:public"])
 
 exports_files(glob([
-    "bin/*",
-    "share/include-what-you-use/*",
+    "bin/**",
+    "share/include-what-you-use/**",
+    "lib/clang/*/include/**",
 ]))
+
+filegroup(
+    name = "include",
+    srcs = glob(["lib/clang/*/include/**"]),
+)
 
 filegroup(
     name = "bin",
