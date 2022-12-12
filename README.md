@@ -11,10 +11,10 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
     name = "com_github_storypku_bazel_iwyu",
-    strip_prefix = "bazel_iwyu-0.0.5",
-    sha256 = "b4596e4f11e61c1ead77065dca8755fccff51e98a903b79ff61562c93ae7138d",
+    strip_prefix = "bazel_iwyu-<version>",
+    sha256 = "<sha256sum>",
     urls = [
-        "https://github.com/storypku/bazel_iwyu/archive/0.0.5.tar.gz",
+        "https://github.com/storypku/bazel_iwyu/archive/<version>.tar.gz",
     ],
 )
 

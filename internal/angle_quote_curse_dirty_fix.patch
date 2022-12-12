@@ -1,0 +1,100 @@
+diff --git a/iwyu_output.cc b/iwyu_output.cc
+index 3f364ac..40f4ed5 100644
+--- a/iwyu_output.cc
++++ b/iwyu_output.cc
+@@ -1986,16 +1986,24 @@ size_t PrintableDiffs(const string& filename,
+   vector<OutputLine> output_lines;
+ 
+   const set<string>& aqi = associated_quoted_includes;  // short alias
+-
+   // Sort all the output-lines: system headers before user headers
+   // before forward-declares, etc.  The easiest way to do this is to
+   // just put them all in multimap whose key is a sort-order (multimap
+   // because some headers might be listed twice in the source file.)
+   multimap<LineSortKey, const OneIncludeOrForwardDeclareLine*> sorted_lines;
++
++  set<std::string> existing_includes;
++  set<std::string> to_add_includes;
+   for (const OneIncludeOrForwardDeclareLine& line : lines) {
+     const IwyuFileInfo* file_info = nullptr;
+-    if (line.IsIncludeLine())
++    if (line.IsIncludeLine()) {
+       file_info = preprocessor_info->FileInfoFor(line.included_file());
++      const std::string& unquoted_include = line.unquoted_include();
++      existing_includes.insert(unquoted_include);
++      if (line.is_desired() && !line.is_present()) {
++        to_add_includes.insert(unquoted_include);
++      }
++    }
+ 
+     sorted_lines.insert(make_pair(GetSortKey(line, aqi, file_info), &line));
+   }
+@@ -2005,10 +2013,27 @@ size_t PrintableDiffs(const string& filename,
+   bool no_adds_or_deletes = true;
+   for (const auto& key_line : sorted_lines) {
+     const OneIncludeOrForwardDeclareLine* line = key_line.second;
+-    if ((line->is_desired() && !line->is_present()) || // add
+-        (line->is_present() && !line->is_desired())) { // delete
+-      no_adds_or_deletes = false;
+-      break;
++    if (line->is_desired() && !line->is_present()) { // add
++      if (line->IsIncludeLine()) {
++        if (!ContainsKey(existing_includes, line->unquoted_include())) {
++          no_adds_or_deletes = false;
++          break;
++        }
++      } else {
++        no_adds_or_deletes = false;
++        break;
++      }
++    }
++    if (line->is_present() && !line->is_desired()) { // delete
++      if (line->IsIncludeLine()) {
++        if (!ContainsKey(to_add_includes, line->unquoted_include())) {
++          no_adds_or_deletes = false;
++          break;
++        }
++      } else {
++        no_adds_or_deletes = false;
++        break;
++      }
+     }
+   }
+   if (no_adds_or_deletes && !GlobalFlags().update_comments) {
+@@ -2025,6 +2050,9 @@ size_t PrintableDiffs(const string& filename,
+     for (const auto& key_line : sorted_lines) {
+       const OneIncludeOrForwardDeclareLine* line = key_line.second;
+       if (line->is_desired() && !line->is_present()) {
++        if (line->IsIncludeLine() && ContainsKey(existing_includes, line->unquoted_include())) {
++            continue;
++        }
+         output_lines.push_back(
+           PrintableIncludeOrForwardDeclareLine(*line, aqi));
+         ++num_edits;
+@@ -2039,6 +2067,9 @@ size_t PrintableDiffs(const string& filename,
+     for (const auto& key_line : sorted_lines) {
+       const OneIncludeOrForwardDeclareLine* line = key_line.second;
+       if (line->is_present() && !line->is_desired()) {
++        if (line->IsIncludeLine() && ContainsKey(to_add_includes, line->unquoted_include())) {
++            continue;
++        }
+         output_lines.push_back(
+             PrintableIncludeOrForwardDeclareLine(*line, aqi));
+         output_lines.back().add_prefix("- ");
+diff --git a/iwyu_output.h b/iwyu_output.h
+index 43d2cc8..2b13b75 100644
+--- a/iwyu_output.h
++++ b/iwyu_output.h
+@@ -134,6 +134,12 @@ class OneIncludeOrForwardDeclareLine {
+     return quoted_include_;
+   }
+ 
++  string unquoted_include() const {
++    CHECK_(IsIncludeLine() && "Must call unquoted_include() on include lines");
++    CHECK_(!fwd_decl_ && "unquoted_include and fwd_decl are mutually exclusive");
++    return quoted_include_.substr(1, quoted_include_.size() - 2);
++  }
++
+   const clang::FileEntry* included_file() const {
+     CHECK_(IsIncludeLine() && "Must call included_file() on include lines");
+     CHECK_(!fwd_decl_ && "included_file and fwd_decl are mutually exclusive");
