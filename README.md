@@ -97,6 +97,4 @@ external/iwyu_prebuilt_pkg/bin/fix_includes.py --nosafe_headers < bazel-bin/path
 7. [ ] CI: Integrate with GitHub Workflows.
 
 ## Contributing
-As with other OSS projects, PRs are always welcome. 
-
-
+As with other OSS projects, Issues and PRs are always welcome.

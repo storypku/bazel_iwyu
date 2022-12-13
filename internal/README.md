@@ -37,13 +37,13 @@ To work around [IWYU Issue #100](https://github.com/include-what-you-use/include
 We may need to run the following commands after the `make install` step in `build_iwyu.sh`.
 
 ```
-pushd /tmp/iwyu-0.19-linux-x86_64
+pushd /tmp/iwyu-0.19-x86_64-linux-gnu
 mkdir -p lib/clang/15.0.6/include
 cp -r /opt/llvm/lib/clang/15.0.6/include/* \
   lib/clang/15.0.6/include/
 popd
 pushd /tmp
-tar czvf iwyu-0.19-linux-x86_64.tar.gz iwyu-0.19-linux-x86_64
+tar cJvf iwyu-0.19-x86_64-linux-gnu.tar.xz iwyu-0.19-x86_64-linux-gnu
 ```
 
 ## About angle-bracket-curse

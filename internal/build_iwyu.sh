@@ -12,7 +12,7 @@ rm -rf "${TOP_DIR}/build"/*
 pushd "${TOP_DIR}/build" >/dev/null
 
 ARCH="$(uname -m)"
-DEST_DIR="/tmp/iwyu-${VERSION}-linux-${ARCH}"
+DEST_DIR="/tmp/iwyu-${VERSION}-${ARCH}-linux-gnu"
 export CC=/opt/llvm/bin/clang
 export CXX=/opt/llvm/bin/clang++
 
