@@ -119,7 +119,7 @@ def _toolchain_flags(ctx, is_cpp_target):
 
 def _safe_flags(flags):
     # Some flags might be used by GCC, but not understood by Clang.
-    # Remove them here, to allow users to run clang-tidy, without having
+    # Remove them here, to allow users to run IWYU, without having
     # a clang toolchain configured (that would produce a good command line with --compiler clang)
     unsupported_flags = [
         "-fno-canonical-system-headers",
