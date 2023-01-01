@@ -20,6 +20,21 @@ http_archive(
     ],
 )
 
+rules_boost_commit = "f1065639e6f33741abe2a6a78fa79dd1a07bbf5d"
+
+http_archive(
+    name = "com_github_nelhage_rules_boost",
+    sha256 = "6ded3e8c064054c92b79aeadde2d78821c889598e634c595133da0ea8f0f0b85",
+    strip_prefix = "rules_boost-{}".format(rules_boost_commit),
+    urls = [
+        "https://github.com/nelhage/rules_boost/archive/{}.tar.gz".format(rules_boost_commit),
+    ],
+)
+
+load("@com_github_nelhage_rules_boost//:boost/boost.bzl", "boost_deps")
+
+boost_deps()
+
 http_archive(
     name = "com_google_googletest",
     sha256 = "b4870bf121ff7795ba20d20bcdd8627b8e088f2d1dab299a031c1034eddc93d5",
