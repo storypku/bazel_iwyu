@@ -9,11 +9,11 @@ def bazel_iwyu_dependencies():
             build_file = Label("//bazel/iwyu:BUILD.prebuilt_pkg"),
             urls = {
                 "linux-x86_64": [
-                    "https://github.com/storypku/bazel_iwyu/releases/download/0.19/iwyu-0.19-x86_64-linux-gnu.tar.xz",
+                    "https://github.com/storypku/bazel_iwyu/releases/download/0.19.1/iwyu-0.19.1-x86_64-linux-gnu.tar.xz",
                 ],
             },
             strip_prefix = {
-                "linux-x86_64": "iwyu-0.19-x86_64-linux-gnu",
+                "linux-x86_64": "iwyu-0.19.1-x86_64-linux-gnu",
             },
             sha256 = {
                 "linux-x86_64": "b6cdae11c647fd28d1608889de68fd27bb7926ed9311d6187294b9780c85c752",

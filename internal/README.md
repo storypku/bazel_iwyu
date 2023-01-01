@@ -23,11 +23,14 @@ IWYU 0.19 can be downloaded from https://github.com/include-what-you-use/include
 When IWYU tarball is extracted, cd into the directory, and run:
 
 ```
-# patch python shebang for our environment (we need python3, not python)
+# Already merged in mainline and upcoming 0.20
 sed -i 's,^#!/usr/bin/env python,#!/usr/bin/env python3,g' iwyu_tool.py
 sed -i 's,^#!/usr/bin/env python,#!/usr/bin/env python3,g' fix_includes.py
 
-patch -p1 < /path/to/angle_bracket_curse_dirty_fix.patch
+patch -p1 < /path/to/p01_angle_bracket_curse_dirty_fix.patch
+
+# Already merged in mainline and upcoming 0.20
+patch -p1 < /path/to/p02_issue_1162_crash_fix.patch
 ```
 
 then build it with `build_iwyu.sh`.
