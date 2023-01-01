@@ -40,13 +40,51 @@ To work around [IWYU Issue #100](https://github.com/include-what-you-use/include
 We may need to run the following commands after the `make install` step in `build_iwyu.sh`.
 
 ```
-pushd /tmp/iwyu-0.19-x86_64-linux-gnu
-mkdir -p lib/clang/15.0.6/include
-cp -r /opt/llvm/lib/clang/15.0.6/include/* \
-  lib/clang/15.0.6/include/
+pushd /tmp/iwyu-0.19.X-x86_64-linux-gnu
+mkdir -p lib/clang/15.0.6
+cp -r /opt/llvm/lib/clang/15.0.6/include lib/clang/15.0.6/include
 popd
 pushd /tmp
-tar cJvf iwyu-0.19-x86_64-linux-gnu.tar.xz iwyu-0.19-x86_64-linux-gnu
+tar cJvf iwyu-0.19.X-x86_64-linux-gnu.tar.xz iwyu-0.19.X-x86_64-linux-gnu
+```
+
+### Special notes for IWYU 0.19 AArch64
+
+1. Ubuntu 20.04+ should be used to build IWYU 0.19. 
+
+   LLVM 15 depends on `libtinfo.so.6`, which was not available for Ubuntu 18.04.
+
+2. System provided CMake (3.16.3) on Ubuntu 20.04 was too old to work with LLVM-15/IWYU-0.19.
+
+Build would fail with the following output otherwise:
+
+```
+CMake Error at /tmp/llvm/lib/cmake/llvm/AddLLVM.cmake:932 (add_executable):
+  Target "include-what-you-use" links to target "ZLIB::ZLIB" but the target
+  was not found.  Perhaps a find_package() call is missing for an IMPORTED
+  target, or an ALIAS target is missing?
+Call Stack (most recent call first):
+  CMakeLists.txt:101 (add_llvm_executable)
+
+CMake Error at /tmp/llvm/lib/cmake/llvm/AddLLVM.cmake:932 (add_executable):
+  Target "include-what-you-use" links to target "Terminfo::terminfo" but the
+  target was not found.  Perhaps a find_package() call is missing for an
+  IMPORTED target, or an ALIAS target is missing?
+Call Stack (most recent call first):
+  CMakeLists.txt:101 (add_llvm_executable)
+
+cannot find -lZLIB::ZLIB
+cannot find -lTerminfo::terminfo
+```
+
+3. LLVM distribution 15.0.3 should be used on Ubuntu 20.04 .
+
+Prebuilt LLVM-15.0.6 requires higher versions of libstdc++ than that was available on Ubuntu 20.04 .
+
+```
+/opt/llvm/bin/clang --version
+/opt/llvm/bin/clang: /lib/aarch64-linux-gnu/libstdc++.so.6: version `GLIBCXX_3.4.29' not found (required by /opt/llvm/bin/clang)
+/opt/llvm/bin/clang: /lib/aarch64-linux-gnu/libstdc++.so.6: version `CXXABI_1.3.13' not found (required by /opt/llvm/bin/clang)
 ```
 
 ## About angle-bracket-curse
