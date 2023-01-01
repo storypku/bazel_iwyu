@@ -65,6 +65,9 @@ build:iwyu --@com_github_storypku_bazel_iwyu//:iwyu_opts=--verbose=3,--no_fwd_de
 bazel build --config=iwyu //path/to/pkg:target
 ```
 
+Please note that for IWYU 0.19 to work on Ubuntu 18.04 Aarch64, you should have `libtinfo6` installed.
+libtinfo6 (`libtinfo6_6.2-0ubuntu2_arm64.deb`) can be downloaded from [Here](https://mirrors.aliyun.com/ubuntu-ports/pool/main/n/ncurses/libtinfo6_6.2-0ubuntu2_arm64.deb?spm=a2c6h.25603864.0.0.6d6c46aedXG4C8).
+
 4. Apply fixes
 
 Create a top-level "external" symlink,
@@ -81,7 +84,7 @@ external/iwyu_prebuilt_pkg/bin/fix_includes.py --nosafe_headers < bazel-bin/path
 
 ## Features
 
-1. [x] Support both x86_64 and aarch64 for Linux.
+1. [x] Support both `x86_64` and aarch64 for Linux.
 2. [x] No compilation database ([Ref](https://sarcasm.github.io/notes/dev/compilation-database.html)) needed.
 3. [x] Support custom IWYU mapping files.
 4. [x] Support custom IWYU options.
