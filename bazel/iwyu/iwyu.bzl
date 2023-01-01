@@ -127,7 +127,9 @@ def _safe_flags(flags):
     ]
 
     return [
-        flag for flag in flags if flag not in unsupported_flags and not flag.startswith("--sysroot")
+        flag
+        for flag in flags
+        if flag not in unsupported_flags and not flag.startswith("--sysroot")
     ]
 
 def _iwyu_aspect_impl(target, ctx):
@@ -155,10 +157,11 @@ def _iwyu_aspect_impl(target, ctx):
     all_flags = _safe_flags(toolchain_flags + rule_flags)
 
     outputs = [
-        _run_iwyu(ctx, iwyu_executable, iwyu_mappings, iwyu_options, all_flags, target, src) for src in srcs
+        _run_iwyu(ctx, iwyu_executable, iwyu_mappings, iwyu_options, all_flags, target, src)
+        for src in srcs
     ]
     return [
-        OutputGroupInfo(report = depset(direct = outputs))
+        OutputGroupInfo(report = depset(direct = outputs)),
     ]
 
 # NOTE(storypku): You may need to perform `bazel clean` if mappings/*.imp were updated.
@@ -169,9 +172,9 @@ iwyu_aspect = aspect(
         "_cc_toolchain": attr.label(
             default = Label("@bazel_tools//tools/cpp:current_cc_toolchain"),
         ),
+        "_iwyu_executable": attr.label(default = Label("//bazel/iwyu:run_iwyu")),
         "_iwyu_mappings": attr.label(default = Label("//:iwyu_mappings")),
         "_iwyu_opts": attr.label(default = Label("//:iwyu_opts")),
-        "_iwyu_executable": attr.label(default = Label("//bazel/iwyu:run_iwyu")),
     },
     toolchains = ["@bazel_tools//tools/cpp:toolchain_type"],
 )
