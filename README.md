@@ -66,7 +66,7 @@ bazel build --config=iwyu //path/to/pkg:target
 ```
 
 Please note that for IWYU 0.19 to work on Ubuntu 18.04 Aarch64, you should have `libtinfo6` installed.
-libtinfo6 (`libtinfo6_6.2-0ubuntu2_arm64.deb`) can be downloaded from [Here](https://mirrors.aliyun.com/ubuntu-ports/pool/main/n/ncurses/libtinfo6_6.2-0ubuntu2_arm64.deb?spm=a2c6h.25603864.0.0.6d6c46aedXG4C8).
+libtinfo6 (`libtinfo6_6.2-0ubuntu2_arm64.deb`) can be downloaded from [Here](https://mirrors.aliyun.com/ubuntu-ports/pool/main/n/ncurses/libtinfo6_6.2-0ubuntu2_arm64.deb).
 
 4. Apply fixes
 
