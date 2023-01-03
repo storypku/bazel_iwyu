@@ -20,10 +20,6 @@ http_archive(
 
 load("@com_github_storypku_bazel_iwyu//bazel:dependencies.bzl", "bazel_iwyu_dependencies")
 bazel_iwyu_dependencies()
-
-# You may need to add the following lines.
-load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
-bazel_skylib_workspace()
 ```
 
 2. Add the following to your .bazelrc.
@@ -84,7 +80,7 @@ external/iwyu_prebuilt_pkg/bin/fix_includes.py --nosafe_headers < bazel-bin/path
 
 ## Features
 
-1. [x] Support both `x86_64` and aarch64 for Linux.
+1. [x] Support both `x86_64` and `aarch64` for Linux.
 2. [x] No compilation database ([Ref](https://sarcasm.github.io/notes/dev/compilation-database.html)) needed.
 3. [x] Support custom IWYU mapping files.
 4. [x] Support custom IWYU options.

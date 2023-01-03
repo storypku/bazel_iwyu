@@ -1,9 +1,8 @@
 #include <iostream>
 
-#include "boost/archive/text_oarchive.hpp"
+#include "boost/archive/text_oarchive.hpp" // IWYU pragma: keep
 #include "boost/serialization/base_object.hpp"
 #include "boost/serialization/export.hpp"
-#include "boost/serialization/serialization.hpp"
 
 struct Base {
   virtual ~Base() = default;
