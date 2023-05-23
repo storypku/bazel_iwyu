@@ -15,11 +15,16 @@ RUN apt-get update && apt-get -y install --no-install-recommends \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+RUN wget --progress=dot:giga https://apt.llvm.org/llvm.sh \
+    && chmod +x llvm.sh \
+    && ./llvm.sh 16
+
 RUN apt-get update && apt-get -y install --no-install-recommends \
     autoconf \
     automake \
     bash-completion \
     build-essential \
+    libclang-16-dev \
     cmake \
     libtool \
     gcc \
@@ -38,12 +43,6 @@ RUN apt-get update && apt-get -y install --no-install-recommends \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /tmp/
-
-# Install LLVM 16 toolchain
-RUN wget --progress=dot:giga https://github.com/llvm/llvm-project/releases/download/llvmorg-16.0.4/clang+llvm-16.0.4-x86_64-linux-gnu-ubuntu-22.04.tar.xz \
-    && tar xJvf clang+llvm-16.0.4-x86_64-linux-gnu-ubuntu-22.04.tar.xz -C /opt \
-    && mv /opt/clang+llvm-16.0.4-x86_64-linux-gnu-ubuntu-22.04 /opt/llvm \
-    && rm clang+llvm-16.0.4-x86_64-linux-gnu-ubuntu-22.04.tar.xz
 
 # Download iwyu repo
 RUN wget --progress=dot:giga https://github.com/include-what-you-use/include-what-you-use/archive/refs/tags/0.20.tar.gz \
