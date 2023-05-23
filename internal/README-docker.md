@@ -11,18 +11,18 @@ docker build -f docker/ubuntu2204.builder.dockerfile --tag=bazel_iwyu/builder .
 ### Export build artifacts for x86_64
 
 ```
-docker build -f docker/ubuntu2204.dockerfile --output type=tar,dest=iwyu-0.20-x86_64-linux-gnu.tar --target=x86_64 .
+docker build -f docker/ubuntu2204.dockerfile --output type=local,dest=iwyu-0.20-x86_64-linux-gnu --target=x86_64 .
 ```
 
 ### Export build artifacts for aarch64
 ```
-docker build -f docker/ubuntu2204.dockerfile --output type=tar,dest=iwyu-0.20-aarch64-linux-gnu.tar --target=aarch64 .
+docker build -f docker/ubuntu2204.dockerfile --output type=local,dest=iwyu-0.20-aarch64-linux-gnu --target=aarch64 .
 ```
 
 ## Post-build
-A tar file containing the build artifacts will be located at: `internal/iwyu-0.20-{ARCH}-linux-gnu.tar`
+A directory containing the build artifacts will be located at: `internal/iwyu-0.20-{ARCH}-linux-gnu`
 
-To install the build artifacts in e.g. `/usr/local`:
+To package this folder as a `.tar.xz`:
 ```
-sudo tar -xf iwyu-0.20-x86_64-linux-gnu.tar -C /usr/local
+tar -cJf iwyu-0.20-{ARCH}-linux-gnu.tar.xz iwyu-0.20-{ARCH}-linux-gnu/
 ```
