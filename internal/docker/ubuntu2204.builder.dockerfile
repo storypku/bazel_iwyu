@@ -1,4 +1,4 @@
-FROM ubuntu:22.04 as build-stage
+FROM ubuntu:22.04
 
 SHELL ["/bin/bash", "-c"]
 
@@ -53,6 +53,3 @@ RUN wget --progress=dot:giga https://github.com/include-what-you-use/include-wha
 COPY ../build_iwyu_docker.sh /tmp/
 RUN pushd include-what-you-use-0.20 \
     && ../build_iwyu_docker.sh
-
-FROM scratch AS export-stage
-COPY --from=build-stage /tmp/iwyu-0.20-x86_64-linux-gnu /
