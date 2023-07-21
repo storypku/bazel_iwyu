@@ -15,16 +15,11 @@ RUN apt-get update && apt-get -y install --no-install-recommends \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-RUN wget --progress=dot:giga https://apt.llvm.org/llvm.sh \
-    && chmod +x llvm.sh \
-    && ./llvm.sh 16
-
 RUN apt-get update && apt-get -y install --no-install-recommends \
     autoconf \
     automake \
     bash-completion \
     build-essential \
-    libclang-16-dev \
     cmake \
     libtool \
     gcc \
@@ -44,6 +39,9 @@ RUN apt-get update && apt-get -y install --no-install-recommends \
 
 WORKDIR /tmp/
 
+COPY ../installers/install_llvm_release.sh /tmp
+RUN /tmp/install_llvm_release.sh
+
 # Download iwyu repo
 RUN wget --progress=dot:giga https://github.com/include-what-you-use/include-what-you-use/archive/refs/tags/0.20.tar.gz \
     && tar xvf 0.20.tar.gz -C /tmp \
@@ -51,5 +49,10 @@ RUN wget --progress=dot:giga https://github.com/include-what-you-use/include-wha
 
 # Build iwyu
 COPY ../build_iwyu_docker.sh /tmp/
+
+# Apply angle-quote-curse workaround
+COPY ../patches /tmp/patches
+
 RUN pushd include-what-you-use-0.20 \
+    && patch -p1 < /tmp/patches/p01_angle_quote_curse_dirty_fix.patch \
     && ../build_iwyu_docker.sh

@@ -1,8 +1,8 @@
 diff --git a/iwyu_output.cc b/iwyu_output.cc
-index 3f364ac..40f4ed5 100644
+index d9d7e3b..c24b21a 100644
 --- a/iwyu_output.cc
 +++ b/iwyu_output.cc
-@@ -1986,16 +1986,24 @@ size_t PrintableDiffs(const string& filename,
+@@ -2025,16 +2025,25 @@ size_t PrintableDiffs(const string& filename,
    vector<OutputLine> output_lines;
  
    const set<string>& aqi = associated_quoted_includes;  // short alias
@@ -21,15 +21,16 @@ index 3f364ac..40f4ed5 100644
 +    if (line.IsIncludeLine()) {
        file_info = preprocessor_info->FileInfoFor(line.included_file());
 +      const std::string& unquoted_include = line.unquoted_include();
-+      existing_includes.insert(unquoted_include);
-+      if (line.is_desired() && !line.is_present()) {
++      if (line.is_present()) {
++        existing_includes.insert(unquoted_include);
++      } else if (line.is_desired()) {
 +        to_add_includes.insert(unquoted_include);
 +      }
 +    }
  
      sorted_lines.insert(make_pair(GetSortKey(line, aqi, file_info), &line));
    }
-@@ -2005,10 +2013,27 @@ size_t PrintableDiffs(const string& filename,
+@@ -2044,10 +2053,27 @@ size_t PrintableDiffs(const string& filename,
    bool no_adds_or_deletes = true;
    for (const auto& key_line : sorted_lines) {
      const OneIncludeOrForwardDeclareLine* line = key_line.second;
@@ -61,7 +62,7 @@ index 3f364ac..40f4ed5 100644
      }
    }
    if (no_adds_or_deletes && !GlobalFlags().update_comments) {
-@@ -2025,6 +2050,9 @@ size_t PrintableDiffs(const string& filename,
+@@ -2064,6 +2090,9 @@ size_t PrintableDiffs(const string& filename,
      for (const auto& key_line : sorted_lines) {
        const OneIncludeOrForwardDeclareLine* line = key_line.second;
        if (line->is_desired() && !line->is_present()) {
@@ -71,7 +72,7 @@ index 3f364ac..40f4ed5 100644
          output_lines.push_back(
            PrintableIncludeOrForwardDeclareLine(*line, aqi));
          ++num_edits;
-@@ -2039,6 +2067,9 @@ size_t PrintableDiffs(const string& filename,
+@@ -2078,6 +2107,9 @@ size_t PrintableDiffs(const string& filename,
      for (const auto& key_line : sorted_lines) {
        const OneIncludeOrForwardDeclareLine* line = key_line.second;
        if (line->is_present() && !line->is_desired()) {
@@ -82,10 +83,10 @@ index 3f364ac..40f4ed5 100644
              PrintableIncludeOrForwardDeclareLine(*line, aqi));
          output_lines.back().add_prefix("- ");
 diff --git a/iwyu_output.h b/iwyu_output.h
-index 43d2cc8..2b13b75 100644
+index 9375ea1..79a83f3 100644
 --- a/iwyu_output.h
 +++ b/iwyu_output.h
-@@ -134,6 +134,12 @@ class OneIncludeOrForwardDeclareLine {
+@@ -168,6 +168,12 @@ class OneIncludeOrForwardDeclareLine {
      return quoted_include_;
    }
  
