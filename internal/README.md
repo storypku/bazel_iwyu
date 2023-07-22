@@ -27,8 +27,13 @@ To package this folder as a `.tar.xz`:
 tar -cJf iwyu-0.20-{ARCH}-linux-gnu.tar.xz iwyu-0.20-{ARCH}-linux-gnu/
 ```
 
-# About angle-bracket-curse
-In the steps above, a patch named `p01_angle_quote_curse_dirty_fix.patch` was applied to workaround the "angle-quote-curse" issue.
-See [IWYU Issues on angle-quote-curse](https://github.com/include-what-you-use/include-what-you-use/issues?q=angle+label%3Aangle-quote-curse) for details.
-We should remove it once upstream has the forementioned issue fixed.
+# Additional Notes
+1. You may need to enable [BuildKit](https://docs.docker.com/build/buildkit/) if your Docker Engine < 23.x.
+   E.g., by setting `DOCKER_BUILDKIT=1` before running `docker build` command.
+
+2. About angle-bracket-curse
+   In the steps above, a patch named `p01_angle_quote_curse_dirty_fix.patch` was applied to workaround the
+   "angle-quote-curse" issue. See [IWYU Issues on angle-quote-curse](https://github.com/include-what-you-use/include-what-you-use/issues?q=angle+label%3Aangle-quote-curse) for details.
+   We should remove it once upstream has the forementioned issue fixed.
+
 
