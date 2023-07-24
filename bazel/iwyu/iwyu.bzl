@@ -69,6 +69,10 @@ def _run_iwyu(ctx, iwyu_executable, iwyu_mappings, iwyu_options, flags, target, 
         outputs = [outfile],
         arguments = [args],
         executable = iwyu_executable,
+        # It seems no-sandbox was required for x-compilation support
+        execution_requirements = {
+            "no-sandbox": "1",
+        },
         mnemonic = "iwyu",
         progress_message = "Run include-what-you-use on {}".format(infile.short_path),
     )
@@ -126,11 +130,7 @@ def _safe_flags(flags):
         "-fstack-usage",
     ]
 
-    return [
-        flag
-        for flag in flags
-        if flag not in unsupported_flags and not flag.startswith("--sysroot")
-    ]
+    return [flag for flag in flags if flag not in unsupported_flags]
 
 def _iwyu_aspect_impl(target, ctx):
     # Interested in C, C++, and CUDA (not-ready) targets only
