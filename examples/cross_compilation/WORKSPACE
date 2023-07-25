@@ -1,0 +1,54 @@
+workspace(name = "iwyu_for_x_compil_demo")
+
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "llvm_x_toolchain",
+    sha256 = "27515d9a488f3484eb5c9905130e70ffd0e9058d3ba2bd60773ad7f2229a0bb9",
+    strip_prefix = "llvm-x-toolchain-0.0.2",
+    urls = [
+        "https://github.com/storypku/llvm-x-toolchain/archive/refs/tags/0.0.2.tar.gz",
+    ],
+)
+
+load("@llvm_x_toolchain//bazel:repositories.bzl", "llvm_x_toolchain_repositories")
+
+llvm_x_toolchain_repositories(llvm_version = "16.0.4")
+
+load("@llvm_x_toolchain//bazel:llvm_x_toolchain_init.bzl", "llvm_x_toolchain_init")
+
+llvm_x_toolchain_init()
+
+# Setup toolchains
+load("@llvm_x_toolchain//toolchain:rules.bzl", "llvm_toolchain")
+
+llvm_toolchain(
+    name = "llvm_toolchain",
+    stdlib = {
+        "": "stdc++",
+    },
+)
+
+load("@llvm_toolchain//:toolchains.bzl", "llvm_register_toolchains")
+
+llvm_register_toolchains()
+
+local_repository(
+    name = "com_github_storypku_bazel_iwyu",
+    path = "../..",
+)
+
+load("@com_github_storypku_bazel_iwyu//bazel:dependencies.bzl", "bazel_iwyu_dependencies")
+
+bazel_iwyu_dependencies()
+
+load("//bazel:sysroots.bzl", sysroot_setup = "repo")
+
+sysroot_setup()
+
+llvm_toolchain(
+    name = "j5_cross_toolchain",
+    sysroot = {
+        "linux-aarch64": "@chromium_sysroot_linux_aarch64//:sysroot",
+    },
+)

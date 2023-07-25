@@ -32,5 +32,6 @@
 *.app
 /user.bazelrc
 
-/bazel-*
+bazel-*
 /external
+

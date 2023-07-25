@@ -1,0 +1,10 @@
+build --incompatible_enable_cc_toolchain_resolution
+
+build:iwyu --aspects @com_github_storypku_bazel_iwyu//bazel/iwyu:iwyu.bzl%iwyu_aspect
+build:iwyu --output_groups=report
+
+build --flag_alias=cuda=@rules_cuda//cuda:enable_cuda
+build --cuda=false
+
+build:j5 --platforms=//:j5_cross_platform
+build:j5 --extra_toolchains=@j5_cross_toolchain//:cc-toolchain-aarch64-linux
