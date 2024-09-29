@@ -19,8 +19,22 @@ def _is_cpp_target(srcs):
 def _is_cuda_target(srcs):
     return any([src.extension in _CUDA_EXTENSIONS for src in srcs])
 
+def _collect_cc_info(ctx):
+    cc_infos = []
+    for dep in ctx.rule.attr.deps:
+        if CcInfo in dep:
+            cc_infos.append(dep[CcInfo])
+    if hasattr(ctx.rule.attr, "implementation_deps"):
+        for dep in ctx.rule.attr.implementation_deps:
+            if CcInfo in dep:
+                cc_infos.append(dep[CcInfo])
+    return cc_infos
+
 def _run_iwyu(ctx, iwyu_executable, iwyu_mappings, iwyu_options, flags, target, infile):
-    compilation_context = target[CcInfo].compilation_context
+    cc_infos = [target[CcInfo]] + _collect_cc_info(ctx)
+    merged_cc_info = cc_common.merge_cc_infos(cc_infos = cc_infos)
+    compilation_context = merged_cc_info.compilation_context
+
     outfile = ctx.actions.declare_file(
         "{}.{}.iwyu.txt".format(target.label.name, infile.basename),
     )
@@ -30,12 +44,7 @@ def _run_iwyu(ctx, iwyu_executable, iwyu_mappings, iwyu_options, flags, target, 
     args.add(outfile)
 
     args.add_all(iwyu_options, before_each = "-Xiwyu")
-
-    args.add_all(
-        ["--mapping_file={}".format(m.path) for m in iwyu_mappings],
-        before_each = "-Xiwyu",
-    )
-
+    args.add_all(["--mapping_file={}".format(m.path) for m in iwyu_mappings], before_each = "-Xiwyu")
     args.add_all(flags)
 
     # add defines
@@ -95,7 +104,6 @@ def _toolchain_flags(ctx, is_cpp_target):
         unsupported_features = ctx.disabled_features,
     )
 
-    flags = None
     if is_cpp_target:
         compile_variables = cc_common.create_compile_variables(
             feature_configuration = feature_configuration,
