@@ -63,6 +63,7 @@ def _run_iwyu(ctx, iwyu_executable, iwyu_mappings, iwyu_options, flags, target, 
 
     args.add_all(compilation_context.quote_includes.to_list(), before_each = "-iquote")
     args.add_all(compilation_context.system_includes.to_list(), before_each = "-isystem")
+    args.add_all(compilation_context.external_includes.to_list(), before_each = "-isystem")
 
     # add source to check
     args.add(infile)
