@@ -4,7 +4,7 @@
 
 ## How To Use
 
-1. In your WORKSPACE file, add
+### In your WORKSPACE file, add
 
 ```python
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
@@ -22,7 +22,7 @@ load("@com_github_storypku_bazel_iwyu//bazel:dependencies.bzl", "bazel_iwyu_depe
 bazel_iwyu_dependencies()
 ```
 
-2. Add the following to your .bazelrc.
+### Add the following to your .bazelrc.
 
 ```
 build:iwyu --aspects @com_github_storypku_bazel_iwyu//bazel/iwyu:iwyu.bzl%iwyu_aspect
@@ -55,13 +55,22 @@ If custom IWYU options should be used, change the line below:
 build:iwyu --@com_github_storypku_bazel_iwyu//:iwyu_opts=--verbose=3,--no_fwd_decls,--cxx17ns,--max_line_length=127
 ```
 
-3. Run IWYU
+### Use you own IWYU binary
+
+by default, bazel_iwyu uses its own prebuilt IWYU.  You can pass a different
+binary with:
+
+```text
+build:iwyu --@bazel_iwyu//:iwyu_executable=<LABEL>
+```
+
+### Run IWYU
 
 ```shell
 bazel build --config=iwyu //path/to/pkg:target
 ```
 
-4. Apply fixes
+### Apply fixes
 
 Create a top-level "external" symlink,
 

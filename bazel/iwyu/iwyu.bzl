@@ -19,7 +19,7 @@ def _is_cpp_target(srcs):
 def _is_cuda_target(srcs):
     return any([src.extension in _CUDA_EXTENSIONS for src in srcs])
 
-def _run_iwyu(ctx, iwyu_executable, iwyu_mappings, iwyu_options, flags, target, infile):
+def _run_iwyu(ctx, wrapper, exe, iwyu_mappings, iwyu_options, flags, target, infile):
     compilation_context = target[CcInfo].compilation_context
     outfile = ctx.actions.declare_file(
         "{}.{}.iwyu.txt".format(target.label.name, infile.basename),
@@ -27,6 +27,10 @@ def _run_iwyu(ctx, iwyu_executable, iwyu_mappings, iwyu_options, flags, target, 
 
     # add args specified by iwyu_options, the toolchain, on the command line and rule copts
     args = ctx.actions.args()
+
+    # this is consumed by the wrapper script
+    args.add(exe.files.to_list()[0])
+
     args.add(outfile)
 
     args.add_all(iwyu_options, before_each = "-Xiwyu")
@@ -60,7 +64,7 @@ def _run_iwyu(ctx, iwyu_executable, iwyu_mappings, iwyu_options, flags, target, 
     args.add(infile)
 
     inputs = depset(
-        direct = [infile] + iwyu_mappings,
+        direct = [infile] + iwyu_mappings + ([exe.files_to_run.executable] if exe.files_to_run.executable else []),
         transitive = [compilation_context.headers],
     )
 
@@ -69,7 +73,7 @@ def _run_iwyu(ctx, iwyu_executable, iwyu_mappings, iwyu_options, flags, target, 
         inputs = inputs,
         outputs = [outfile],
         arguments = [args],
-        executable = iwyu_executable,
+        executable = wrapper,
         # It seems no-sandbox was required for x-compilation support
         execution_requirements = {
             "no-sandbox": "1",
@@ -144,7 +148,8 @@ def _iwyu_aspect_impl(target, ctx):
     if len(srcs) == 0 or _is_cuda_target(srcs):
         return []
 
-    iwyu_executable = ctx.attr._iwyu_executable.files_to_run
+    wrapper = ctx.attr._iwyu_wrapper.files_to_run
+    exe = ctx.attr._iwyu_executable
     iwyu_mappings = ctx.attr._iwyu_mappings.files.to_list()
     iwyu_options = ctx.attr._iwyu_opts[BuildSettingInfo].value
 
@@ -158,7 +163,7 @@ def _iwyu_aspect_impl(target, ctx):
     all_flags = _safe_flags(toolchain_flags + rule_flags)
 
     outputs = [
-        _run_iwyu(ctx, iwyu_executable, iwyu_mappings, iwyu_options, all_flags, target, src)
+        _run_iwyu(ctx, wrapper, exe, iwyu_mappings, iwyu_options, all_flags, target, src)
         for src in srcs
     ]
     return [
@@ -173,7 +178,8 @@ iwyu_aspect = aspect(
         "_cc_toolchain": attr.label(
             default = Label("@bazel_tools//tools/cpp:current_cc_toolchain"),
         ),
-        "_iwyu_executable": attr.label(default = Label("//bazel/iwyu:run_iwyu")),
+        "_iwyu_wrapper": attr.label(default = Label("//bazel/iwyu:run_iwyu")),
+        "_iwyu_executable": attr.label(default = Label("//:iwyu_executable")),
         "_iwyu_mappings": attr.label(default = Label("//:iwyu_mappings")),
         "_iwyu_opts": attr.label(default = Label("//:iwyu_opts")),
     },

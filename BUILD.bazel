@@ -2,6 +2,16 @@ load("@bazel_skylib//rules:common_settings.bzl", "string_list_flag")
 
 package(default_visibility = ["//visibility:public"])
 
+filegroup(
+    name = "iwyu_executable_default",
+    srcs = ["//bazel/iwyu:prebuilt_iwyu"],
+)
+
+label_flag(
+    name = "iwyu_executable",
+    build_setting_default = ":iwyu_executable_default",
+)
+
 label_flag(
     name = "iwyu_mappings",
     build_setting_default = ":iwyu_mappings_default",

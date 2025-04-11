@@ -25,11 +25,12 @@ set -euo pipefail
 readonly RED='\033[0;31m'
 readonly RESET='\033[0m'
 
-IWYU_BINARY="$(rlocation iwyu_prebuilt_pkg/bin/include-what-you-use)"
-
 function error() {
   (echo >&2 -e "${RED}[ERROR]${RESET} $*")
 }
+
+IWYU_BINARY="$1"
+shift
 
 OUTPUT="$1"
 shift

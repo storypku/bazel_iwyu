@@ -8,19 +8,11 @@ platform(
         "@platforms//cpu:x86_64",
         "@platforms//os:linux",
     ],
-    exec_compatible_with = [
-        "@platforms//cpu:x86_64",
-        "@platforms//os:linux",
-    ],
 )
 
 platform(
     name = "aarch64_platform",
     constraint_values = [
-        "@platforms//cpu:aarch64",
-        "@platforms//os:linux",
-    ],
-    exec_compatible_with = [
         "@platforms//cpu:aarch64",
         "@platforms//os:linux",
     ],
@@ -30,10 +22,6 @@ platform(
     name = "j5_cross_platform",
     constraint_values = [
         "//bazel/soctype:j5",
-    ],
-    exec_compatible_with = [
-        "@platforms//cpu:x86_64",
-        "@platforms//os:linux",
     ],
     parents = [":aarch64_platform"],
 )
